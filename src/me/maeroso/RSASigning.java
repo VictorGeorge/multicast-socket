@@ -1,21 +1,26 @@
 package me.maeroso;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
-public class RSASigning {
-    public static byte[] sign(PrivateKey privateKey, byte[] message) throws Exception {
+class RSASigning {
+    static byte[] encrypt(PublicKey publicKey, byte[] toEncrypt) throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, BadPaddingException, IllegalBlockSizeException {
         Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.ENCRYPT_MODE, privateKey);
+        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
 
-        return cipher.doFinal(message);
+        return cipher.doFinal(toEncrypt);
     }
 
-    public static byte[] decrypt(PublicKey publicKey, byte[] encrypted) throws Exception {
+    static byte[] decrypt(PrivateKey privateKey, byte[] toDecrypt) throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, BadPaddingException, IllegalBlockSizeException {
         Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.DECRYPT_MODE, publicKey);
+        cipher.init(Cipher.DECRYPT_MODE, privateKey);
 
-        return cipher.doFinal(encrypted);
+        return cipher.doFinal(toDecrypt);
     }
 }
