@@ -19,9 +19,9 @@ import java.util.concurrent.atomic.AtomicReference;
 class AsyncMessagesHandler {
     private final Thread multicastListener;
     private final Thread unicastListener;
-    private final AtomicReference<MulticastSocket> mSocket = new AtomicReference<>();
-    private final AtomicReference<ServerSocket> uServerSocket = new AtomicReference<>();
-    private final AtomicReference<Peer> currentPreferredPeer = new AtomicReference<>();
+    private AtomicReference<MulticastSocket> mSocket = new AtomicReference<>();
+    private AtomicReference<ServerSocket> uServerSocket = new AtomicReference<>();
+    private AtomicReference<Peer> currentPreferredPeer = new AtomicReference<>();
 
     AsyncMessagesHandler() throws IOException {
         this.mSocket.set(new MulticastSocket(Configuration.DEFAULT_PORT));
@@ -177,7 +177,7 @@ class AsyncMessagesHandler {
                         File selectedFile = FileManager.getInstance().search(fileName).get(0);
                         byte[] fileContent = Files.readAllBytes(selectedFile.toPath());
                         try {
-                            byte[] encryptedBytes = RSASigning.encrypt(messageReceived.sourcePeer.getPublicKey(), fileContent);
+                            byte[] encryptedBytes = CryptoUtils.encrypt(messageReceived.sourcePeer.getPublicKey(), fileContent);
                             FileBytesTuple fileBytesTuple = new FileBytesTuple(selectedFile, encryptedBytes);
                             uSendMessage(clientSocket, new Message(Message.MessageType.ESTABLISH_TRANSFER_RESPONSE, PeerManager.getInstance().getOurPeer(), fileBytesTuple));
                         } catch (InvalidKeyException e) {
@@ -189,7 +189,7 @@ class AsyncMessagesHandler {
                     case ESTABLISH_TRANSFER_RESPONSE: {
                         FileBytesTuple receivedFile = (FileBytesTuple) messageReceived.content;
                         try {
-                            byte[] decryptedBytes = RSASigning.decrypt(PeerManager.getInstance().getKeyPair().getPrivate(), receivedFile.fileContent);
+                            byte[] decryptedBytes = CryptoUtils.decrypt(PeerManager.getInstance().getKeyPair().getPrivate(), receivedFile.fileContent);
                             boolean b = FileManager.getInstance().saveFile(receivedFile.fileObject.getName(), decryptedBytes);
                             if (b)
                                 uSendMessage(clientSocket, new Message(Message.MessageType.SEND_RATING, PeerManager.getInstance().getOurPeer(), PeerManager.getInstance().getOurPeer().getReputation() + 1));

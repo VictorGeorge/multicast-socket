@@ -34,8 +34,8 @@ public class Application2 {
                     System.out.println("Type a file name: ");
                     fileName = scanner.nextLine();
                     messagesHandler.searchFile(fileName);
+                    break;
                 }
-                break;
                 case "add": {
                     String fileName;
                     System.out.println("Type a path: ");
@@ -47,12 +47,17 @@ public class Application2 {
                         e.printStackTrace();
                         System.out.println("It was not possible to add file! :(");
                     }
+                    break;
+                }
+                case "list": {
+                    FileManager.getInstance().listFiles();
+                    break;
                 }
                 case "exit": {
                     this.close();
                     exitKeyPressed = true;
+                    break;
                 }
-                break;
             }
         } while (!exitKeyPressed);
     }

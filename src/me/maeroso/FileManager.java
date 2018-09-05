@@ -26,6 +26,10 @@ public class FileManager {
         return ourInstance;
     }
 
+    private static void print(File file) {
+        System.out.println(file.getName());
+    }
+
     public List<File> search(String fileName) {
         return fileList.stream().filter(file -> file.getName().equals(fileName)).collect(Collectors.toList());
     }
@@ -48,5 +52,9 @@ public class FileManager {
         File newFile = new File(String.format("%s%s%s", filesRepo.getAbsolutePath(), File.separator, file.getName()));
         Files.write(newFile.toPath(), fileContents, StandardOpenOption.CREATE);
         fileList.add(newFile);
+    }
+
+    public void listFiles() {
+         fileList.forEach(FileManager::print);
     }
 }
