@@ -13,7 +13,7 @@ import java.util.Random;
 
 public class PeerManager {
     private static PeerManager ourInstance = new PeerManager();
-    KeyPair keyPair;
+    private KeyPair keyPair;
     private Peer ourPeer;
     private List<Peer> peerList;
 
@@ -30,17 +30,14 @@ public class PeerManager {
             int generatedPort = new Random().nextInt(50) + 4200;
             System.err.println("Generated instance port: " + generatedPort);
             try {
-                ourInstance.ourPeer = new Peer(new InetSocketAddress(InetAddress.getLocalHost(), generatedPort), getKeyPair().getPublic());
-            } catch (UnknownHostException e) {
+                KeyPair keyPair = CryptoUtils.generateRSA();
+                ourInstance.ourPeer = new Peer(new InetSocketAddress(InetAddress.getLocalHost(), generatedPort), keyPair.getPublic());
+            } catch (UnknownHostException | NoSuchAlgorithmException e) {
                 e.printStackTrace();
             }
 
         }
         return ourInstance.ourPeer;
-    }
-
-    public KeyPair getKeyPair() {
-        return keyPair;
     }
 
     public void add(Peer p) {

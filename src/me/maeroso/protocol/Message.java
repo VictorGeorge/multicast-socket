@@ -44,8 +44,6 @@ public class Message implements Serializable {
     }
 
     public enum MessageType {
-        GREETING_REQUEST, GREETING_RESPONSE,
-        SEARCH_REQUEST, SEARCH_RESPONSE,
-        ESTABLISH_TRANSFER_REQUEST, SEND_RATING, ESTABLISH_TRANSFER_RESPONSE
+        GREETING_REQUEST, GREETING_RESPONSE, LEAVE_REQUEST
     }
 }

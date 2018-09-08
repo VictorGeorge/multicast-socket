@@ -6,7 +6,6 @@ import java.net.InetSocketAddress;
 import java.security.PublicKey;
 
 public class Peer implements Serializable {
-    private int reputation;
     private InetSocketAddress socketAddress;
     private PublicKey publicKey;
 
@@ -33,13 +32,5 @@ public class Peer implements Serializable {
                 "socketAddress=" + socketAddress +
                 ", publicKey=" + publicKey +
                 '}';
-    }
-
-    public int getReputation() {
-        return reputation;
-    }
-
-    public void setReputation(int reputation) {
-        this.reputation = reputation;
     }
 }
