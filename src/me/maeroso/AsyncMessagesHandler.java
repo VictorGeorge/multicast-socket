@@ -76,7 +76,7 @@ class AsyncMessagesHandler {
                             break;
                         }
                         case GREETING_RESPONSE: {
-                            if (messageReceived.destinationPeer.getId().equals(PeerManager.getInstance().getOurPeer().getId()))
+                            if (messageReceived.destinationPeer.getId().equals(PeerManager.getInstance().getOurPeer().getId())) //if destination is this peer
                                 PeerManager.getInstance().add(messageReceived.sourcePeer);
                             break;
                         }

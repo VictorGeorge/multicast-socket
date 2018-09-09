@@ -15,6 +15,7 @@ public class PeerManager {
     private static PeerManager ourInstance = new PeerManager();
     private Peer ourPeer;
     private List<Peer> peerList;
+    private Boolean started = false;
 
     private PeerManager() {
         this.peerList = new LinkedList<>();
@@ -42,6 +43,7 @@ public class PeerManager {
     public void add(Peer p) {
         peerList.add(p);
         System.err.println("Added peer to list: " + p.getId());
+        updateStarted(peerList);
     }
 
     public void remove(Peer p) {
@@ -58,5 +60,18 @@ public class PeerManager {
                 System.out.println(peer.getId() + "\n");
             }
         }
+    }
+
+    public List<Peer> getPeerList() {
+        return peerList;
+    }
+
+    public void updateStarted(List<Peer> peerList){
+        if(started == false && peerList.size() + 1 >= Configuration.MINIMUM_PEERS)
+            started = true;
+    }
+
+    public boolean isStarted(){
+        return started;
     }
 }

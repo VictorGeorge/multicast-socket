@@ -33,6 +33,12 @@ public class Application {
         Scanner scanner = new Scanner(System.in);
         boolean exitKeyPressed = false;
         String command;
+        System.out.println("Commands:");
+        System.out.println("search");
+        System.out.println("list");
+        System.out.println("resource1");
+        System.out.println("resource2");
+        System.out.println("exit\n");
         do {
             System.out.println("Type a command: ");
             command = scanner.nextLine();
@@ -47,6 +53,22 @@ public class Application {
                 }
                 case "list": {
                     PeerManager.getInstance().printPeerList();
+                    break;
+                }
+                case "resource1": {
+                    if(!PeerManager.getInstance().isStarted())
+                        System.out.println("Minimum " + Configuration.MINIMUM_PEERS + " peers to initiate");
+                    else{
+                        //TODO
+                    }
+                    break;
+                }
+                case "resource2": {
+                    if(!PeerManager.getInstance().isStarted())
+                        System.out.println("Minimum" + Configuration.MINIMUM_PEERS + " peers to initiate");
+                    else{
+                        //TODO
+                    }
                     break;
                 }
                 case "exit": {
