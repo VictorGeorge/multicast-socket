@@ -6,6 +6,9 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.security.*;
 
+/**
+ * Classe estática de funções relacionadas a criptografia.
+ */
 class CryptoUtils {
     static byte[] encrypt(PublicKey publicKey, byte[] toEncrypt) throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, BadPaddingException, IllegalBlockSizeException {
         Cipher cipher = Cipher.getInstance("RSA");

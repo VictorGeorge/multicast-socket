@@ -2,15 +2,15 @@ package me.maeroso;
 
 import me.maeroso.protocol.Peer;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Singleton de estado da lista de peers conhecidos pela instância
+ */
 public class PeerManager {
     private static PeerManager ourInstance = new PeerManager();
     private Peer ourPeer;
@@ -31,8 +31,8 @@ public class PeerManager {
             System.err.println("Generated instance port: " + generatedPort);
             try {
                 KeyPair keyPair = CryptoUtils.generateRSA();
-                ourInstance.ourPeer = new Peer(new InetSocketAddress(InetAddress.getLocalHost(), generatedPort), keyPair.getPublic(), keyPair.getPrivate());
-            } catch (UnknownHostException | NoSuchAlgorithmException e) {
+                ourInstance.ourPeer = new Peer(keyPair.getPublic(), keyPair.getPrivate());
+            } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();
             }
 
