@@ -66,6 +66,10 @@ public class Message implements Serializable {
         return resource;
     }
 
+    public Peer getDestinationPeer() {
+        return destinationPeer;
+    }
+
     public enum MessageType {
         GREETING_REQUEST, GREETING_RESPONSE, LEAVE_REQUEST, RESOURCE_REQUEST, RESOURCE_RESPONSE
     }

@@ -3,6 +3,7 @@ package me.maeroso;
 import me.maeroso.enums.EnumResourceId;
 import me.maeroso.enums.EnumResourceStatus;
 import me.maeroso.protocol.Message;
+import me.maeroso.protocol.Peer;
 
 import java.io.*;
 import java.net.DatagramPacket;
@@ -10,6 +11,9 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -20,11 +24,13 @@ class MessagesHandler {
     private final AsyncMessagesHandler asyncMessagesHandler;
     private AtomicReference<MulticastSocket> mSocket;
     private AtomicReference<Instant> lastResourceRequestTimestamp;
+    private List<Message> requestAnswers;
 
     MessagesHandler() throws IOException {
         mSocket = new AtomicReference<>();
         mSocket.set(new MulticastSocket(Configuration.DEFAULT_PORT));
         asyncMessagesHandler = new AsyncMessagesHandler();
+        lastResourceRequestTimestamp = new AtomicReference<Instant>();
     }
 
     /**
@@ -82,9 +88,28 @@ class MessagesHandler {
         PeerManager.getInstance().getOurPeer().getResourcesState().put(resourceId, EnumResourceStatus.WANTED);
 
         lastResourceRequestTimestamp.set(Instant.now());
+        requestAnswers = new LinkedList<Message>();
 
         // Envia uma mensagem de requisição do recurso
         mResourceRequest(resourceId, lastResourceRequestTimestamp.get());
+
+        while (requestAnswers.size() != PeerManager.getInstance().getPeerList().size()) {
+            if (ChronoUnit.SECONDS.between(lastResourceRequestTimestamp.get(),Instant.now()) >= Configuration.MAXIMUM_DELTA_SEC) { //Segundos entre requisição e resposta
+                List<Peer> peersWhoAnswered = new LinkedList<Peer>();
+                List<Peer> peersWhoDidntAnswered = PeerManager.getInstance().getPeerList();
+                for(Message m : requestAnswers){
+                    peersWhoAnswered.add(m.getDestinationPeer());
+                }
+                for(Peer p : peersWhoAnswered){
+                    peersWhoDidntAnswered.remove(p); //removing from list of peers the ones who answered we have the ones which didn't
+                }
+                //now we remove these peers
+                for(Peer p : peersWhoDidntAnswered){
+                    mSendMessage(this.mSocket.get(), new Message(Message.MessageType.LEAVE_REQUEST, p));
+                }
+            }
+        }
+        System.out.println("Resource Request TODO");
         //TODO rest of algorithm
 
     }
@@ -163,11 +188,8 @@ class MessagesHandler {
             if (!messageReceived.destinationPeer.equals(PeerManager.getInstance().getOurPeer())) // se mensagem é destinada a esta instância adicione quem mandou a mensagem.
                 return;
 
-            long interval = ChronoUnit.SECONDS.between(lastResourceRequestTimestamp.get(), messageReceived.timestamp);
-
-            if (interval <= Configuration.MAXIMUM_DELTA_SEC) {
-                System.out.println("Receive response from " + messageReceived.sourcePeer);
-            }
+            System.out.println("Receive response from " + messageReceived.sourcePeer);
+            requestAnswers.add(messageReceived);
         }
 
         private void handleResourceRequest(Message messageReceived) {

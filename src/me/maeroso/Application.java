@@ -71,6 +71,9 @@ public class Application {
                     exitKeyPressed = true;
                     break;
                 }
+                default:
+                    System.out.println("Unknown Command");
+                    break;
             }
         } while (!exitKeyPressed);
     }
