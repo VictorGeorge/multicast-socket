@@ -21,7 +21,7 @@ public class Peer implements Serializable {
         this.id = UUID.randomUUID().toString().substring(0, 4);
         this.publicKey = publicKey;
         this.privateKey = privateKey;
-        resourcesState = new HashMap<EnumResourceId, EnumResourceStatus>();
+        this.resourcesState = new HashMap<EnumResourceId, EnumResourceStatus>();
         //Adiciona estados iniciais de cada um dos 2 recursos
         this.resourcesState.put(EnumResourceId.RESOURCE1,
                 EnumResourceStatus.RELEASED);

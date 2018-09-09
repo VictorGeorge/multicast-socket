@@ -4,6 +4,7 @@ import me.maeroso.enums.EnumResourceId;
 import me.maeroso.enums.EnumResourceStatus;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.Objects;
 
 public class Message implements Serializable {
@@ -12,6 +13,7 @@ public class Message implements Serializable {
     public MessageType messageType;
     public EnumResourceId resource;
     public EnumResourceStatus status;
+    public Instant timestamp;
 
     public Message(MessageType messageType, Peer sourcePeer) {
         this.messageType = messageType;
@@ -24,18 +26,20 @@ public class Message implements Serializable {
         this.destinationPeer = destinationPeer;
     }
 
-    public Message(MessageType messageType, Peer sourcePeer, EnumResourceId resource) { //Mensagem de requisição de recurso
+    public Message(MessageType messageType, Peer sourcePeer, EnumResourceId resource, Instant timestamp) { //Mensagem de requisição de recurso
         this.messageType = messageType;
         this.sourcePeer = sourcePeer;
         this.resource = resource;
+        this.timestamp = timestamp;
     }
 
-    public Message(MessageType messageType, Peer sourcePeer, Peer destinationPeer, EnumResourceId resource, EnumResourceStatus status) { //Mensagem de resposta a requisição de recurso
+    public Message(MessageType messageType, Peer sourcePeer, Peer destinationPeer, EnumResourceId resource, EnumResourceStatus status, Instant timestamp) { //Mensagem de resposta a requisição de recurso
         this.messageType = messageType;
         this.sourcePeer = sourcePeer;
         this.destinationPeer = destinationPeer;
         this.resource = resource;
         this.status = status;
+        this.timestamp = timestamp;
     }
 
     @Override

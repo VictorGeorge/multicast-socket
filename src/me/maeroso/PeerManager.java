@@ -66,12 +66,12 @@ public class PeerManager {
         return peerList;
     }
 
-    public void updateStarted(List<Peer> peerList){
-        if(started == false && peerList.size() + 1 >= Configuration.MINIMUM_PEERS)
+    public void updateStarted(List<Peer> peerList) {
+        if (!started && peerList.size() + 1 >= Configuration.MINIMUM_PEERS)
             started = true;
     }
 
-    public boolean isStarted(){
+    public boolean isStarted() {
         return started;
     }
 }

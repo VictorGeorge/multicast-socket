@@ -8,20 +8,23 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
  * Classe de troca de mensagens da instância.
  */
-class AsyncMessagesHandler {
-    private final Thread multicastListener;
+class MessagesHandler {
+    private final AsyncMessagesHandler asyncMessagesHandler;
     private AtomicReference<MulticastSocket> mSocket;
+    private AtomicReference<Instant> lastResourceRequestTimestamp;
 
-    AsyncMessagesHandler() throws IOException {
+    MessagesHandler() throws IOException {
         mSocket = new AtomicReference<>();
         mSocket.set(new MulticastSocket(Configuration.DEFAULT_PORT));
-        multicastListener = new MulticastEventListener();
+        asyncMessagesHandler = new AsyncMessagesHandler();
     }
 
     /**
@@ -53,10 +56,9 @@ class AsyncMessagesHandler {
      */
     void start() throws IOException {
         this.mSocket.get().joinGroup(InetAddress.getByName(Configuration.DEFAULT_HOST));
-        this.multicastListener.start();
+        this.asyncMessagesHandler.start();
         this.mGreeting();
     }
-
 
     /**
      * Método de encerramento do fluxo onde:
@@ -67,9 +69,24 @@ class AsyncMessagesHandler {
      */
     void close() throws IOException {
         this.mGoodbye();
-        this.multicastListener.interrupt();
+        this.asyncMessagesHandler.interrupt();
         this.mSocket.get().leaveGroup(InetAddress.getByName(Configuration.DEFAULT_HOST));
         this.mSocket.get().close();
+    }
+
+    /**
+     * método que trata a requisição de um request.
+     */
+    public void resourceRequest(EnumResourceId resourceId) {
+        // Atualiza o estado desse peer sobre esse recurso para WANTED
+        PeerManager.getInstance().getOurPeer().getResourcesState().put(resourceId, EnumResourceStatus.WANTED);
+
+        lastResourceRequestTimestamp.set(Instant.now());
+
+        // Envia uma mensagem de requisição do recurso
+        mResourceRequest(resourceId, lastResourceRequestTimestamp.get());
+        //TODO rest of algorithm
+
     }
 
     /**
@@ -89,26 +106,14 @@ class AsyncMessagesHandler {
     /**
      * método que constrói e envia mensagem de requisição de recurso aos pares.
      */
-    private void mResourceRequest(EnumResourceId resouceId) {
-        mSendMessage(this.mSocket.get(), new Message(Message.MessageType.RESOURCE_REQUEST, PeerManager.getInstance().getOurPeer(), resouceId));
+    private void mResourceRequest(EnumResourceId resourceId, Instant timestamp) {
+        mSendMessage(this.mSocket.get(), new Message(Message.MessageType.RESOURCE_REQUEST, PeerManager.getInstance().getOurPeer(), resourceId, timestamp));
     }
 
     /**
-     * método que trata a requisição de um request.
+     * Handler assíncrono de eventos no grupo multicast.
      */
-    public void resourceRequest(EnumResourceId resouceId){
-        // Atualiza o estado desse peer sobre esse recurso para WANTED
-        PeerManager.getInstance().getOurPeer().getResourcesState().put(resouceId, EnumResourceStatus.WANTED);
-
-        // Envia uma mensagem de requisição do recurso
-        mResourceRequest(resouceId);
-        //TODO rest of algorithm
-    }
-
-    /**
-     * Listener de eventos assíncronos no grupo multicast.
-     */
-    class MulticastEventListener extends Thread {
+    class AsyncMessagesHandler extends Thread {
         @Override
         public void run() {
             try {
@@ -127,32 +132,24 @@ class AsyncMessagesHandler {
 
                     System.err.println("Message received: " + messageReceived);
                     switch (messageReceived.messageType) { // verifica tipo da mensagem
-                        case GREETING_REQUEST: { // recebe pedido de cumprimento a todos
-                            PeerManager.getInstance().add(messageReceived.sourcePeer);
-                            mSendMessage(mSocket.get(), new Message(Message.MessageType.GREETING_RESPONSE, PeerManager.getInstance().getOurPeer(), messageReceived.sourcePeer)); // envia mensagem de auto-apresentação destinada ao novo par
+                        case GREETING_REQUEST: { // mensagem de requisição de cumprimento
+                            handleGreetingRequest(messageReceived);
                             break;
                         }
-                        case GREETING_RESPONSE: { // recebe resposta pedido de cumprimento
-                            // se mensagem é destinada a esta instância adicione quem mandou a mensagem.
-                            if (messageReceived.destinationPeer.equals(PeerManager.getInstance().getOurPeer()))
-                                PeerManager.getInstance().add(messageReceived.sourcePeer);
+                        case GREETING_RESPONSE: { // mensagem de resposta a cumprimento
+                            handleGreetingResponse(messageReceived);
                             break;
                         }
-                        case LEAVE_REQUEST: { // mensagem de adeus
-                            // remova o par da lista de pares online
-                            PeerManager.getInstance().remove(messageReceived.sourcePeer);
+                        case LEAVE_REQUEST: { // mensagem de "adeus" do par sainte
+                            handleLeaveRequest(messageReceived);
                             break;
                         }
                         case RESOURCE_REQUEST: { // mensagem de requisição de recurso
-                            EnumResourceId requestedResource = messageReceived.getResource();// Responde à requisição de recursos
-                            EnumResourceStatus requestResourceSituation = PeerManager.getInstance().getOurPeer().getResourcesState().get(requestedResource); //verifica em que situação o estado está para este peer
-                            mSendMessage(mSocket.get(), new Message(Message.MessageType.RESOURCE_RESPONSE, PeerManager.getInstance().getOurPeer(), messageReceived.sourcePeer, requestedResource, requestResourceSituation)); // envia mensagem de resposta a requisição
-                            System.out.println("RESOURCE_REQUEST to " + requestedResource + "\n");
+                            handleResourceRequest(messageReceived);
                             break;
                         }
-                        case RESOURCE_RESPONSE: { // mensagem de requisição de recurso
-                            if (messageReceived.destinationPeer.equals(PeerManager.getInstance().getOurPeer())) // se mensagem é destinada a esta instância adicione quem mandou a mensagem.
-                                System.out.println("Receive response from " + messageReceived.sourcePeer);
+                        case RESOURCE_RESPONSE: { // mensagem de resposta a req. de recurso
+                            handleResourceResponse(messageReceived);
                             break;
                         }
                     }
@@ -160,6 +157,40 @@ class AsyncMessagesHandler {
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
+        }
+
+        private void handleResourceResponse(Message messageReceived) {
+            if (!messageReceived.destinationPeer.equals(PeerManager.getInstance().getOurPeer())) // se mensagem é destinada a esta instância adicione quem mandou a mensagem.
+                return;
+
+            long interval = ChronoUnit.SECONDS.between(lastResourceRequestTimestamp.get(), messageReceived.timestamp);
+
+            if (interval <= Configuration.MAXIMUM_DELTA_SEC) {
+                System.out.println("Receive response from " + messageReceived.sourcePeer);
+            }
+        }
+
+        private void handleResourceRequest(Message messageReceived) {
+            EnumResourceId requestedResource = messageReceived.getResource();// Responde à requisição de recursos
+            EnumResourceStatus requestedResourceStatus = PeerManager.getInstance().getOurPeer().getResourcesState().get(requestedResource); //verifica em que situação o estado está para este peer
+            mSendMessage(mSocket.get(), new Message(Message.MessageType.RESOURCE_RESPONSE, PeerManager.getInstance().getOurPeer(), messageReceived.sourcePeer, requestedResource, requestedResourceStatus, Instant.now())); // envia mensagem de resposta a requisição
+            System.out.println("RESOURCE_REQUEST to " + requestedResource + "\n");
+        }
+
+        private void handleLeaveRequest(Message messageReceived) {
+            // remova o par da lista de pares online
+            PeerManager.getInstance().remove(messageReceived.sourcePeer);
+        }
+
+        private void handleGreetingResponse(Message messageReceived) {
+            // se mensagem é destinada a esta instância adicione quem mandou a mensagem.
+            if (!messageReceived.destinationPeer.equals(PeerManager.getInstance().getOurPeer())) return;
+            PeerManager.getInstance().add(messageReceived.sourcePeer);
+        }
+
+        private void handleGreetingRequest(Message messageReceived) {
+            PeerManager.getInstance().add(messageReceived.sourcePeer);
+            mSendMessage(mSocket.get(), new Message(Message.MessageType.GREETING_RESPONSE, PeerManager.getInstance().getOurPeer(), messageReceived.sourcePeer)); // envia mensagem de auto-apresentação destinada ao novo par
         }
     }
 }

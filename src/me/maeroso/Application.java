@@ -6,10 +6,10 @@ import java.io.IOException;
 import java.util.Scanner;
 
 public class Application {
-    private AsyncMessagesHandler messagesHandler;
+    private MessagesHandler messagesHandler;
 
     public Application() throws IOException {
-        this.messagesHandler = new AsyncMessagesHandler();
+        this.messagesHandler = new MessagesHandler();
     }
 
     public static void main(String[] args) {
@@ -36,39 +36,32 @@ public class Application {
         boolean exitKeyPressed = false;
         String command;
         System.out.println("Commands:");
-        System.out.println("search");
         System.out.println("list");
         System.out.println("resource1");
         System.out.println("resource2");
         System.out.println("exit\n");
+
         do {
             System.out.println("Type a command: ");
             command = scanner.nextLine();
 
             switch (command.trim().toLowerCase()) {
-                case "search": {
-                    String fileName;
-                    System.out.println("Type a file name: ");
-                    fileName = scanner.nextLine();
-                    //TODO resource search
-                    break;
-                }
                 case "list": {
                     PeerManager.getInstance().printPeerList();
                     break;
                 }
                 case "resource1": {
-                    if(!PeerManager.getInstance().isStarted())
+                    if (!PeerManager.getInstance().isStarted())
                         System.out.println("Minimum " + Configuration.MINIMUM_PEERS + " peers to initiate");
-                    else{
+                    else {
                         this.messagesHandler.resourceRequest(EnumResourceId.RESOURCE1);
                     }
                     break;
                 }
                 case "resource2": {
-                    if(!PeerManager.getInstance().isStarted())
+                    if (!PeerManager.getInstance().isStarted())
                         System.out.println("Minimum" + Configuration.MINIMUM_PEERS + " peers to initiate");
-                    else{
+                    else {
                         this.messagesHandler.resourceRequest(EnumResourceId.RESOURCE2);
                     }
                     break;
