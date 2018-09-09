@@ -109,8 +109,18 @@ class MessagesHandler {
                 }
             }
         }
+        // Excluimos todos os ausentes, agora vereficamos as respostas
+        Boolean areAllReleased = requestAnswers.stream().allMatch(requestAnswers -> requestAnswers.getStatus().equals(EnumResourceStatus.RELEASED));
+        if (areAllReleased) {
+            // Se todos responderam released, esse peer pode pegar o recurso
+            PeerManager.getInstance().getOurPeer().getResourcesState().put(resourceId, EnumResourceStatus.HELD);
+            System.out.println("Changing " + resourceId + " to HELD");
+        } else {
+            System.out.println("Resource it's not release to all peers");
+            //TODO rest of algorithm
+        }
         System.out.println("Resource Request TODO");
-        //TODO rest of algorithm
+
 
     }
 
