@@ -53,9 +53,9 @@ public class PeerManager {
 
     public void printPeerList() {
         if (peerList.size() == 0)
-            System.out.println("Empty peers list\n");
+            System.out.println("\nEmpty peers list\n");
         else {
-            System.out.println("Peers list: \n");
+            System.out.println("\nPeers list: \n");
             for (Peer peer : peerList) {
                 System.out.println(peer.getId() + "\n");
             }

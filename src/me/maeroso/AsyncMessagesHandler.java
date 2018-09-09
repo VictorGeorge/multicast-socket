@@ -1,5 +1,7 @@
 package me.maeroso;
 
+import me.maeroso.enums.EnumResourceId;
+import me.maeroso.enums.EnumResourceStatus;
 import me.maeroso.protocol.Message;
 
 import java.io.*;
@@ -85,6 +87,25 @@ class AsyncMessagesHandler {
     }
 
     /**
+     * método que constrói e envia mensagem de requisição de recurso aos pares.
+     */
+    private void mResourceRequest(EnumResourceId resouceId) {
+        mSendMessage(this.mSocket.get(), new Message(Message.MessageType.RESOURCE_REQUEST, PeerManager.getInstance().getOurPeer(), resouceId));
+    }
+
+    /**
+     * método que trata a requisição de um request.
+     */
+    public void resourceRequest(EnumResourceId resouceId){
+        // Atualiza o estado desse peer sobre esse recurso para WANTED
+        PeerManager.getInstance().getOurPeer().getResourcesState().put(resouceId, EnumResourceStatus.WANTED);
+
+        // Envia uma mensagem de requisição do recurso
+        mResourceRequest(resouceId);
+        //TODO rest of algorithm
+    }
+
+    /**
      * Listener de eventos assíncronos no grupo multicast.
      */
     class MulticastEventListener extends Thread {
@@ -120,6 +141,18 @@ class AsyncMessagesHandler {
                         case LEAVE_REQUEST: { // mensagem de adeus
                             // remova o par da lista de pares online
                             PeerManager.getInstance().remove(messageReceived.sourcePeer);
+                            break;
+                        }
+                        case RESOURCE_REQUEST: { // mensagem de requisição de recurso
+                            EnumResourceId requestedResource = messageReceived.getResource();// Responde à requisição de recursos
+                            EnumResourceStatus requestResourceSituation = PeerManager.getInstance().getOurPeer().getResourcesState().get(requestedResource); //verifica em que situação o estado está para este peer
+                            mSendMessage(mSocket.get(), new Message(Message.MessageType.RESOURCE_RESPONSE, PeerManager.getInstance().getOurPeer(), messageReceived.sourcePeer, requestedResource, requestResourceSituation)); // envia mensagem de resposta a requisição
+                            System.out.println("RESOURCE_REQUEST to " + requestedResource + "\n");
+                            break;
+                        }
+                        case RESOURCE_RESPONSE: { // mensagem de requisição de recurso
+                            if (messageReceived.destinationPeer.equals(PeerManager.getInstance().getOurPeer())) // se mensagem é destinada a esta instância adicione quem mandou a mensagem.
+                                System.out.println("Receive response from " + messageReceived.sourcePeer);
                             break;
                         }
                     }

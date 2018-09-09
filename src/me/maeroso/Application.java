@@ -1,5 +1,7 @@
 package me.maeroso;
 
+import me.maeroso.enums.EnumResourceId;
+
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -29,7 +31,7 @@ public class Application {
     }
 
 
-    private void cli() {
+    private void cli() throws IOException {
         Scanner scanner = new Scanner(System.in);
         boolean exitKeyPressed = false;
         String command;
@@ -59,7 +61,7 @@ public class Application {
                     if(!PeerManager.getInstance().isStarted())
                         System.out.println("Minimum " + Configuration.MINIMUM_PEERS + " peers to initiate");
                     else{
-                        //TODO
+                        this.messagesHandler.resourceRequest(EnumResourceId.RESOURCE1);
                     }
                     break;
                 }
@@ -67,7 +69,7 @@ public class Application {
                     if(!PeerManager.getInstance().isStarted())
                         System.out.println("Minimum" + Configuration.MINIMUM_PEERS + " peers to initiate");
                     else{
-                        //TODO
+                        this.messagesHandler.resourceRequest(EnumResourceId.RESOURCE2);
                     }
                     break;
                 }
@@ -80,7 +82,7 @@ public class Application {
         } while (!exitKeyPressed);
     }
 
-    private void close() {
+    private void close() throws IOException {
         this.messagesHandler.close();
     }
 }
