@@ -45,6 +45,10 @@ public class Application {
                     //TODO resource search
                     break;
                 }
+                case "list": {
+                    PeerManager.getInstance().printPeerList();
+                    break;
+                }
                 case "exit": {
                     this.close();
                     exitKeyPressed = true;

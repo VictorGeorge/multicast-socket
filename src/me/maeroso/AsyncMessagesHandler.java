@@ -39,12 +39,17 @@ class AsyncMessagesHandler {
     }
 
     void close() throws IOException {
+        this.mGoodbye();
         this.multicastListener.interrupt();
         this.mSocket.get().close();
     }
 
     private void mGreeting() {
         mSendMessage(this.mSocket.get(), new Message(Message.MessageType.GREETING_REQUEST, PeerManager.getInstance().getOurPeer()));
+    }
+
+    private void mGoodbye() {
+        mSendMessage(this.mSocket.get(), new Message(Message.MessageType.LEAVE_REQUEST, PeerManager.getInstance().getOurPeer()));
     }
 
     class MulticastEventListener extends Thread {
@@ -67,6 +72,10 @@ class AsyncMessagesHandler {
                     switch (messageReceived.messageType) {
                         case GREETING_REQUEST: {
                             PeerManager.getInstance().add(messageReceived.sourcePeer);
+                            break;
+                        }
+                        case LEAVE_REQUEST: {
+                            PeerManager.getInstance().remove(messageReceived.sourcePeer);
                             break;
                         }
                     }
