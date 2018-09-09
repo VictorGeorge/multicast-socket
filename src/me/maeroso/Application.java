@@ -59,10 +59,6 @@ public class Application {
     }
 
     private void close() {
-        try {
-            this.messagesHandler.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.messagesHandler.close();
     }
 }

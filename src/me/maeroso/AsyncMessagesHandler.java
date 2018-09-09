@@ -38,7 +38,7 @@ class AsyncMessagesHandler {
         this.mGreeting();
     }
 
-    void close() throws IOException {
+    void close() {
         this.mGoodbye();
         this.multicastListener.interrupt();
         this.mSocket.get().close();
@@ -65,13 +65,19 @@ class AsyncMessagesHandler {
                     ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);
                     Message messageReceived = (Message) objectInputStream.readObject();
 
-                    if (messageReceived.sourcePeer.getPublicKey().equals(PeerManager.getInstance().getOurPeer().getPublicKey()))
+                    if (messageReceived.sourcePeer.getId().equals(PeerManager.getInstance().getOurPeer().getId()))
                         continue;
 
                     System.err.println("Message received: " + messageReceived);
                     switch (messageReceived.messageType) {
                         case GREETING_REQUEST: {
                             PeerManager.getInstance().add(messageReceived.sourcePeer);
+                            mSendMessage(mSocket.get(), new Message(Message.MessageType.GREETING_RESPONSE, PeerManager.getInstance().getOurPeer(), messageReceived.sourcePeer));
+                            break;
+                        }
+                        case GREETING_RESPONSE: {
+                            if (messageReceived.destinationPeer.getId().equals(PeerManager.getInstance().getOurPeer().getId()))
+                                PeerManager.getInstance().add(messageReceived.sourcePeer);
                             break;
                         }
                         case LEAVE_REQUEST: {

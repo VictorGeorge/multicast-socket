@@ -5,18 +5,18 @@ import java.util.Objects;
 
 public class Message implements Serializable {
     public Peer sourcePeer;
+    public Peer destinationPeer;
     public MessageType messageType;
-    public Object content;
-
-    public Message(MessageType messageType, Peer sourcePeer, Object content) {
-        this.messageType = messageType;
-        this.sourcePeer = sourcePeer;
-        this.content = content;
-    }
 
     public Message(MessageType messageType, Peer sourcePeer) {
         this.messageType = messageType;
         this.sourcePeer = sourcePeer;
+    }
+
+    public Message(MessageType messageType, Peer sourcePeer, Peer destinationPeer) {
+        this.messageType = messageType;
+        this.sourcePeer = sourcePeer;
+        this.destinationPeer = destinationPeer;
     }
 
     @Override
@@ -25,22 +25,18 @@ public class Message implements Serializable {
         if (o == null || getClass() != o.getClass()) return false;
         Message message = (Message) o;
         return Objects.equals(sourcePeer, message.sourcePeer) &&
-                messageType == message.messageType &&
-                Objects.equals(content, message.content);
+                Objects.equals(destinationPeer, message.destinationPeer) &&
+                messageType == message.messageType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sourcePeer, messageType, content);
+        return Objects.hash(sourcePeer, destinationPeer, messageType);
     }
 
     @Override
     public String toString() {
-        return "Message{" +
-                "sourcePeer=" + sourcePeer +
-                ", messageType=" + messageType +
-                ", content=" + content +
-                '}';
+        return String.format("Message { sourcePeer=%s, destinationPeer=%s, messageType=%s }", sourcePeer, destinationPeer, messageType);
     }
 
     public enum MessageType {

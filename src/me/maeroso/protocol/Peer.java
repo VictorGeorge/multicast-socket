@@ -3,8 +3,8 @@ package me.maeroso.protocol;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.security.PublicKey;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.UUID;
 
 public class Peer implements Serializable {
@@ -17,7 +17,7 @@ public class Peer implements Serializable {
         this.socketAddress = socketAddress;
         this.publicKey = publicKey;
         this.privateKey = privateKey;
-        this.id = UUID.randomUUID().toString().substring(0, 2);
+        this.id = UUID.randomUUID().toString().substring(0,7);
     }
 
     public InetAddress getAddress() {
@@ -38,9 +38,6 @@ public class Peer implements Serializable {
 
     @Override
     public String toString() {
-        return "Peer{" +
-                "socketAddress=" + socketAddress +
-                ", publicKey=" + publicKey +
-                '}';
+        return String.format("Peer { id='%s', socketAddress=%s }", id, socketAddress);
     }
 }

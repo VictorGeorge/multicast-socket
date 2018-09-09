@@ -13,7 +13,6 @@ import java.util.Random;
 
 public class PeerManager {
     private static PeerManager ourInstance = new PeerManager();
-    private KeyPair keyPair;
     private Peer ourPeer;
     private List<Peer> peerList;
 
@@ -46,18 +45,12 @@ public class PeerManager {
     }
 
     public void remove(Peer p) {
-        for(Peer peer : peerList){
-            if(peer.getId().equals(p.getId())) {
-                peerList.remove(peer);
-                System.err.println("Removing peer from list: " + p.getId());
-                return;
-            }
-        }
-        System.err.println("Failed to remove: " + p.getId());
+        peerList.remove(p);
+        System.err.println("Removing peer from list: " + p.getId());
     }
 
-    public void printPeerList(){
-        if(peerList.size() == 0)
+    public void printPeerList() {
+        if (peerList.size() == 0)
             System.out.println("Empty peers list\n");
         else {
             System.out.println("Peers list: \n");
