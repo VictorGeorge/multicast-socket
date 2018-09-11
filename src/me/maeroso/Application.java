@@ -1,6 +1,7 @@
 package me.maeroso;
 
 import me.maeroso.enums.EnumResourceId;
+import me.maeroso.enums.EnumResourceStatus;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -35,14 +36,17 @@ public class Application {
         Scanner scanner = new Scanner(System.in);
         boolean exitKeyPressed = false;
         String command;
-        System.out.println("Commands:");
-        System.out.println("list");
-        System.out.println("resource1");
-        System.out.println("resource2");
-        System.out.println("exit\n");
-
         do {
-            System.out.println("Type a command: ");
+            System.out.println("\nCommands:");
+            System.out.println("list");
+            System.out.println("resource1");
+            System.out.println("resource2");
+            if(isResourceHeld(EnumResourceId.RESOURCE1)) //Se peer tem posse do recurso 1
+                System.out.println("free r1");
+            if(isResourceHeld(EnumResourceId.RESOURCE2)) //Se peer tem posse do recurso 2
+                System.out.println("free r2");
+            System.out.println("exit");
+            System.out.println("\nType a command: ");
             command = scanner.nextLine();
 
             switch (command.trim().toLowerCase()) {
@@ -54,7 +58,7 @@ public class Application {
                     if (!PeerManager.getInstance().isStarted())
                         System.out.println("Minimum " + Configuration.MINIMUM_PEERS + " peers to initiate");
                     else {
-                        this.messagesHandler.resourceRequest(EnumResourceId.RESOURCE1);
+                        this.messagesHandler.resourceRequest(EnumResourceId.RESOURCE1, null);
                     }
                     break;
                 }
@@ -62,7 +66,27 @@ public class Application {
                     if (!PeerManager.getInstance().isStarted())
                         System.out.println("Minimum" + Configuration.MINIMUM_PEERS + " peers to initiate");
                     else {
-                        this.messagesHandler.resourceRequest(EnumResourceId.RESOURCE2);
+                        this.messagesHandler.resourceRequest(EnumResourceId.RESOURCE2, null);
+                    }
+                    break;
+                }
+                case "free r1": {
+                    if(isResourceHeld(EnumResourceId.RESOURCE1)) { //Checa se peer realmente tem posse do recurso 1
+                        PeerManager.getInstance().getOurPeer().getResourcesState().put(EnumResourceId.RESOURCE1, EnumResourceStatus.RELEASED);
+                        this.messagesHandler.resourceRelease(EnumResourceId.RESOURCE1);//avisar os outros por multicast que liberou
+                    }
+                    else {
+                        System.out.println("\nYou don't have the resource 1 to free it! jerk\n");
+                    }
+                    break;
+                }
+                case "free r2": {
+                    if(isResourceHeld(EnumResourceId.RESOURCE2)) { //Checa peer realmente tem posse do recurso 2
+                        PeerManager.getInstance().getOurPeer().getResourcesState().put(EnumResourceId.RESOURCE2, EnumResourceStatus.RELEASED);
+                        this.messagesHandler.resourceRelease(EnumResourceId.RESOURCE2);//avisar os outros por multicast que liberou
+                    }
+                    else {
+                        System.out.println("\nYou don't have the resource 2 to free it! jerk\n");
                     }
                     break;
                 }
@@ -80,5 +104,11 @@ public class Application {
 
     private void close() throws IOException {
         this.messagesHandler.close();
+    }
+
+    private boolean isResourceHeld(EnumResourceId resourceId){
+        if(PeerManager.getInstance().getOurPeer().getResourcesState().get(resourceId) == EnumResourceStatus.HELD) //Se peer tem posse do recurso
+            return true;
+        return false;
     }
 }

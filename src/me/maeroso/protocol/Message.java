@@ -6,6 +6,7 @@ import me.maeroso.enums.EnumResourceStatus;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Message implements Serializable {
     public Peer sourcePeer;
@@ -13,7 +14,7 @@ public class Message implements Serializable {
     public MessageType messageType;
     public EnumResourceId resource;
     public EnumResourceStatus status;
-    public Instant timestamp;
+    public AtomicReference<Instant> timestamp;
 
     public Message(MessageType messageType, Peer sourcePeer) {
         this.messageType = messageType;
@@ -26,14 +27,20 @@ public class Message implements Serializable {
         this.destinationPeer = destinationPeer;
     }
 
-    public Message(MessageType messageType, Peer sourcePeer, EnumResourceId resource, Instant timestamp) { //Mensagem de requisição de recurso
+    public Message(MessageType messageType, Peer sourcePeer, EnumResourceId resource, AtomicReference<Instant> timestamp) { //Mensagem de requisição de recurso
         this.messageType = messageType;
         this.sourcePeer = sourcePeer;
         this.resource = resource;
         this.timestamp = timestamp;
     }
 
-    public Message(MessageType messageType, Peer sourcePeer, Peer destinationPeer, EnumResourceId resource, EnumResourceStatus status, Instant timestamp) { //Mensagem de resposta a requisição de recurso
+    public Message(MessageType messageType, Peer sourcePeer, EnumResourceId resource) { //Mensagem de liberação de recurso
+        this.messageType = messageType;
+        this.sourcePeer = sourcePeer;
+        this.resource = resource;
+    }
+
+    public Message(MessageType messageType, Peer sourcePeer, Peer destinationPeer, EnumResourceId resource, EnumResourceStatus status, AtomicReference<Instant> timestamp) { //Mensagem de resposta a requisição de recurso
         this.messageType = messageType;
         this.sourcePeer = sourcePeer;
         this.destinationPeer = destinationPeer;
@@ -70,10 +77,19 @@ public class Message implements Serializable {
         return destinationPeer;
     }
 
+    public Peer getSourcePeer() {
+        return sourcePeer;
+    }
+
     public EnumResourceStatus getStatus(){
         return status;
     }
+
+    public AtomicReference<Instant> getTimestamp() {
+        return timestamp;
+    }
+
     public enum MessageType {
-        GREETING_REQUEST, GREETING_RESPONSE, LEAVE_REQUEST, RESOURCE_REQUEST, RESOURCE_RESPONSE
+        GREETING_REQUEST, GREETING_RESPONSE, LEAVE_REQUEST, RESOURCE_REQUEST, RESOURCE_RESPONSE, RESOURCE_RELEASE
     }
 }
