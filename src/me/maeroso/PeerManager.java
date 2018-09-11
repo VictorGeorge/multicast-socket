@@ -1,12 +1,12 @@
 package me.maeroso;
 
+import me.maeroso.enums.EnumResourceId;
 import me.maeroso.protocol.Peer;
 
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.time.Instant;
+import java.util.*;
 
 /**
  * Singleton de estado da lista de peers conhecidos pela instância
@@ -16,6 +16,8 @@ public class PeerManager {
     private Peer ourPeer;
     private List<Peer> peerList;
     private Boolean started = false;
+    private Map<Peer, Instant> resourceWanted1;
+    private Map<Peer, Instant> resourceWanted2;
 
     private PeerManager() {
         this.peerList = new LinkedList<>();
@@ -32,6 +34,8 @@ public class PeerManager {
             try {
                 KeyPair keyPair = CryptoUtils.generateRSA();
                 ourInstance.ourPeer = new Peer(keyPair.getPublic(), keyPair.getPrivate());
+                this.resourceWanted1 = new LinkedHashMap<Peer, Instant>();
+                this.resourceWanted2 = new LinkedHashMap<Peer, Instant>();
             } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();
             }
@@ -69,6 +73,12 @@ public class PeerManager {
     public void updateStarted(List<Peer> peerList) {
         if (!started && peerList.size() + 1 >= Configuration.MINIMUM_PEERS)
             started = true;
+    }
+
+    public Map<Peer, Instant> getResourceWanted(EnumResourceId resource){
+        if(resource.equals(EnumResourceId.RESOURCE1))
+            return resourceWanted1;
+        return resourceWanted2;
     }
 
     public boolean isStarted() {

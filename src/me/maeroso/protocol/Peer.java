@@ -18,14 +18,13 @@ public class Peer implements Serializable {
     private PublicKey publicKey;
     private PrivateKey privateKey;
     private Map<EnumResourceId, EnumResourceStatus> resourcesState;
-    private Map<EnumResourceId, AtomicReference<Instant>> resourceWanted;
 
     public Peer(PublicKey publicKey, PrivateKey privateKey) {
         this.id = UUID.randomUUID().toString().substring(0, 4);
         this.publicKey = publicKey;
         this.privateKey = privateKey;
         this.resourcesState = new HashMap<EnumResourceId, EnumResourceStatus>();
-        this.resourceWanted = new HashMap<EnumResourceId, AtomicReference<Instant>>();
+
         //Adiciona estados iniciais de cada um dos 2 recursos
         this.resourcesState.put(EnumResourceId.RESOURCE1,
                 EnumResourceStatus.RELEASED);
@@ -43,10 +42,6 @@ public class Peer implements Serializable {
 
     public Map<EnumResourceId, EnumResourceStatus> getResourcesState(){
         return resourcesState;
-    }
-
-    public Map<EnumResourceId, AtomicReference<Instant>> getResourceWanted(){
-        return resourceWanted;
     }
 
     @Override

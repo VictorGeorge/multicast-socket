@@ -58,7 +58,7 @@ public class Application {
                     if (!PeerManager.getInstance().isStarted())
                         System.out.println("Minimum " + Configuration.MINIMUM_PEERS + " peers to initiate");
                     else {
-                        this.messagesHandler.resourceRequest(EnumResourceId.RESOURCE1, null);
+                        this.messagesHandler.resourceRequest(EnumResourceId.RESOURCE1);
                     }
                     break;
                 }
@@ -66,13 +66,14 @@ public class Application {
                     if (!PeerManager.getInstance().isStarted())
                         System.out.println("Minimum" + Configuration.MINIMUM_PEERS + " peers to initiate");
                     else {
-                        this.messagesHandler.resourceRequest(EnumResourceId.RESOURCE2, null);
+                        this.messagesHandler.resourceRequest(EnumResourceId.RESOURCE2);
                     }
                     break;
                 }
                 case "free r1": {
                     if(isResourceHeld(EnumResourceId.RESOURCE1)) { //Checa se peer realmente tem posse do recurso 1
                         PeerManager.getInstance().getOurPeer().getResourcesState().put(EnumResourceId.RESOURCE1, EnumResourceStatus.RELEASED);
+                        PeerManager.getInstance().getResourceWanted(EnumResourceId.RESOURCE1).remove(PeerManager.getInstance().getOurPeer());//Remove ele proprio da cabeça da fila
                         this.messagesHandler.resourceRelease(EnumResourceId.RESOURCE1);//avisar os outros por multicast que liberou
                     }
                     else {
@@ -83,6 +84,7 @@ public class Application {
                 case "free r2": {
                     if(isResourceHeld(EnumResourceId.RESOURCE2)) { //Checa peer realmente tem posse do recurso 2
                         PeerManager.getInstance().getOurPeer().getResourcesState().put(EnumResourceId.RESOURCE2, EnumResourceStatus.RELEASED);
+                        PeerManager.getInstance().getResourceWanted(EnumResourceId.RESOURCE2).remove(PeerManager.getInstance().getOurPeer());//Remove ele proprio da cabeça da fila
                         this.messagesHandler.resourceRelease(EnumResourceId.RESOURCE2);//avisar os outros por multicast que liberou
                     }
                     else {
