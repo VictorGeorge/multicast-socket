@@ -12,18 +12,12 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.net.SocketException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -136,40 +130,8 @@ class MessagesHandler {
         } else if (requestAnswers.stream().anyMatch(requestAnswers -> requestAnswers.getStatus().equals(EnumResourceStatus.HELD))) { //Se algum está em HELD
             System.out.println("Resource it's already HELD by a peer, put Request into queue");
             PeerManager.INSTANCE.getOurPeer().getResourcesState().put(resourceId, EnumResourceStatus.WANTED);//Se teve uma batalha de menor tempo de indicação, o que perdeu vai vir pra ca como released pq cedeu, entao tem que mudar pra Wanted de novo
-
-            Map.Entry<Instant, Peer> Head = PeerManager.INSTANCE.getResourceWanted(resourceId).entrySet().iterator().next();//hardcode
             putOnQueue(resourceId, lastResourceRequestTimestamp.get());
         }
-        /**else if(requestAnswers.stream().anyMatch(requestAnswers -> requestAnswers.getStatus().equals(EnumResourceStatus.WANTED))){ // tem algum WANTED
-         boolean wonDispute = true;
-         for(Message m : requestAnswers){ //comparar com todos que querem, se ganhar de todos pega o recurso
-         if(m.getStatus().equals(EnumResourceStatus.WANTED)) {
-         int result = m.getTimestamp().compareTo(lastResourceRequestTimestamp.get());//comparando tempos
-         if(result < 0) {//tempo do concorrente é menor, perdeu
-         wonDispute = false;
-         break;
-         }
-         else if(result == 0){ //tempos iguais
-         result = m.getSourcePeer().getId().compareTo(PeerManager.INSTANCE.getOurPeer().getId());//comparando Ids
-         if(result < 0) {//id da requisição é menor que o do proprio peer, perdeu
-         wonDispute = false;
-         break;
-         }
-         }
-         }
-         }
-         if(wonDispute) { //Se esse peer ganhou dos concorrentes
-         PeerManager.INSTANCE.getOurPeer().getResourcesState().put(resourceId, EnumResourceStatus.HELD);
-         PeerManager.INSTANCE.getResourceWanted(resourceId).put(PeerManager.INSTANCE.getOurPeer(), lastResourceRequestTimestamp.get()); //Coloca na fila
-         System.out.println("You won the resource! Changing" + resourceId + " to HELD");
-         mQueueAdd(resourceId, lastResourceRequestTimestamp.get());//avisa outros peers para atualizarem sua fila//avisar que fila mudou
-         }
-         else{ //se perdeu vai pra fila
-         PeerManager.INSTANCE.getOurPeer().getResourcesState().put(resourceId, EnumResourceStatus.WANTED);
-         PeerManager.INSTANCE.getResourceWanted(resourceId).put(PeerManager.INSTANCE.getOurPeer(), lastResourceRequestTimestamp.get()); //Coloca na fila
-         mQueueAdd(resourceId, lastResourceRequestTimestamp.get());//avisar que fila mudou
-         }
-         }**/
     }
 
     /**
@@ -209,10 +171,18 @@ class MessagesHandler {
         if (!resourceQueue.isEmpty()) { //Verifica se n ta vazia
             Iterator<Map.Entry<Instant, Peer>> iterator = resourceQueue.entrySet().iterator();
             Head = iterator.next();//Pega novo cabeça da fila
-            if (Head.getValue().equals(PeerManager.INSTANCE.getOurPeer())) { //Se o cabeça da fila for a gente, muda pra HELD
+            Peer ourPeer = PeerManager.INSTANCE.getOurPeer();
+            if (Head.getValue().equals(ourPeer)) { //Se o cabeça da fila for a gente, muda pra HELD
                 this.resourceRelease(resourceId);
             } else {
-                //TODO se estiver no corpo da fila, ainda com WANTED
+                while (iterator.hasNext()) {
+                    Map.Entry<Instant, Peer> i = iterator.next();
+
+                    // está no corpo da fila como interessado
+                    if(i.getValue().equals(ourPeer)) {
+                        mSendMessage(mSocket.get(), new Message(Message.MessageType.QUEUE_REMOVE, PeerManager.INSTANCE.getOurPeer(), resourceId, i.getKey()));
+                    }
+                }
             }
         }
     }
@@ -292,6 +262,10 @@ class MessagesHandler {
                             handleQueueAdd(messageReceived);
                             break;
                         }
+                        case QUEUE_REMOVE: {
+                            handleQueueRemove(messageReceived);
+                            break;
+                        }
                     }
                 }
             } catch (IOException | ClassNotFoundException e) {
@@ -308,6 +282,15 @@ class MessagesHandler {
         }
 
         private void handleResourceRequest(Message messageReceived) {
+            if (!verifySignature(messageReceived)) return;
+
+            EnumResourceId requestedResource = messageReceived.getResource();// Guarda qual dos dois recursos é o request
+            EnumResourceStatus requestedResourceStatus = PeerManager.INSTANCE.getOurPeer().getResourcesState().get(requestedResource); //verifica em que situação o estado está para este peer
+            mSendMessage(mSocket.get(), new Message(Message.MessageType.RESOURCE_RESPONSE, PeerManager.INSTANCE.getOurPeer(), messageReceived.sourcePeer, requestedResource, requestedResourceStatus, Instant.now())); // envia mensagem de resposta a requisição
+            System.out.println("RESOURCE_REQUEST to " + requestedResource + "\n");
+        }
+
+        private boolean verifySignature(Message messageReceived) {
             Peer supposedPeer = messageReceived.sourcePeer;
             Optional<Peer> first = PeerManager.INSTANCE.getPeerList().stream().filter(peer -> peer.getId().equals(supposedPeer.getId())).findFirst();
             PublicKey truePubKey = first.get().getPublicKey();
@@ -316,13 +299,9 @@ class MessagesHandler {
                 System.err.println(String.format("VALID SIGNATURE FROM %s ", messageReceived.sourcePeer.getId()));
             } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException e) {
                 System.err.println(String.format("INVALID SIGNATURE FROM %s ", messageReceived.sourcePeer.getId()));
-                return;
+                return false;
             }
-
-            EnumResourceId requestedResource = messageReceived.getResource();// Guarda qual dos dois recursos é o request
-            EnumResourceStatus requestedResourceStatus = PeerManager.INSTANCE.getOurPeer().getResourcesState().get(requestedResource); //verifica em que situação o estado está para este peer
-            mSendMessage(mSocket.get(), new Message(Message.MessageType.RESOURCE_RESPONSE, PeerManager.INSTANCE.getOurPeer(), messageReceived.sourcePeer, requestedResource, requestedResourceStatus, Instant.now())); // envia mensagem de resposta a requisição
-            System.out.println("RESOURCE_REQUEST to " + requestedResource + "\n");
+            return true;
         }
 
         private void handleResourceRelease(Message messageReceived) {
@@ -372,6 +351,13 @@ class MessagesHandler {
             Peer Peer = messageReceived.getSourcePeer();// Qual peer enviou a msg
             Instant time = messageReceived.getTimestamp(); //Qual timestamp
             PeerManager.INSTANCE.getResourceWanted(Resource).put(time, Peer); //adiciona a fila
+        }
+
+        private void handleQueueRemove(Message messageReceived) {
+            EnumResourceId Resource = messageReceived.getResource();// Guarda sobre qual dos dois recursos é a msg
+            Peer Peer = messageReceived.getSourcePeer();// Qual peer enviou a msg
+            Instant time = messageReceived.getTimestamp(); //Qual timestamp
+            PeerManager.INSTANCE.getResourceWanted(Resource).remove(time, Peer); //adiciona a fila
         }
     }
 }
