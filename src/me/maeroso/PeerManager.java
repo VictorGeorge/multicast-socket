@@ -16,8 +16,8 @@ public class PeerManager {
     private Peer ourPeer;
     private List<Peer> peerList;
     private Boolean started = false;
-    private Map<Peer, Instant> resourceWanted1;
-    private Map<Peer, Instant> resourceWanted2;
+    private Map<Instant, Peer> resourceWanted1;
+    private Map<Instant, Peer> resourceWanted2;
 
     private PeerManager() {
         this.peerList = new LinkedList<>();
@@ -34,8 +34,8 @@ public class PeerManager {
             try {
                 KeyPair keyPair = CryptoUtils.generateRSA();
                 ourInstance.ourPeer = new Peer(keyPair.getPublic(), keyPair.getPrivate());
-                this.resourceWanted1 = new LinkedHashMap<Peer, Instant>();
-                this.resourceWanted2 = new LinkedHashMap<Peer, Instant>();
+                this.resourceWanted1 = new TreeMap<Instant, Peer>();
+                this.resourceWanted2 = new TreeMap<Instant, Peer>();
             } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();
             }
@@ -75,7 +75,7 @@ public class PeerManager {
             started = true;
     }
 
-    public Map<Peer, Instant> getResourceWanted(EnumResourceId resource){
+    public Map<Instant, Peer> getResourceWanted(EnumResourceId resource){
         if(resource.equals(EnumResourceId.RESOURCE1))
             return resourceWanted1;
         return resourceWanted2;

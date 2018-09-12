@@ -81,7 +81,7 @@ public class Message implements Serializable {
         return sourcePeer;
     }
 
-    public EnumResourceStatus getStatus(){
+    public EnumResourceStatus getStatus() {
         return status;
     }
 
@@ -90,6 +90,6 @@ public class Message implements Serializable {
     }
 
     public enum MessageType {
-        GREETING_REQUEST, GREETING_RESPONSE, LEAVE_REQUEST, RESOURCE_REQUEST, RESOURCE_RESPONSE, RESOURCE_RELEASE, QUEUE_ADD
+        GREETING_REQUEST, GREETING_RESPONSE, LEAVE_REQUEST, LEAVE_RESPONSE, RESOURCE_REQUEST, RESOURCE_RESPONSE, RESOURCE_RELEASE, QUEUE_ADD
     }
 }
