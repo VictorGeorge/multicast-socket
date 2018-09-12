@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Main" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="me.maeroso.Application" />
-    <module name="multicast-socket-sd1" />
+    <module name="DistributedSystems" />
     <option name="VM_PARAMETERS" value="-Djava.net.preferIPv4Stack=true" />
     <RunnerSettings RunnerId="Run" />
     <ConfigurationWrapper RunnerId="Run" />

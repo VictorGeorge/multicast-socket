@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/DistributedSystems.iml" filepath="$PROJECT_DIR$/DistributedSystems.iml" />
       <module fileurl="file://$PROJECT_DIR$/multicast-socket-sd1.iml" filepath="$PROJECT_DIR$/multicast-socket-sd1.iml" />
     </modules>
   </component>
