@@ -54,11 +54,11 @@ public class Application {
 
             switch (command.trim().toLowerCase()) {
                 case "list": {
-                    PeerManager.getInstance().printPeerList();
+                    PeerManager.INSTANCE.printPeerList();
                     break;
                 }
                 case "resource1": {
-                    if (!PeerManager.getInstance().isStarted())
+                    if (!PeerManager.INSTANCE.isStarted())
                         System.out.println("Minimum " + Configuration.MINIMUM_PEERS + " peers to initiate");
                     else {
                         this.messagesHandler.resourceRequest(EnumResourceId.RESOURCE1);
@@ -66,7 +66,7 @@ public class Application {
                     break;
                 }
                 case "resource2": {
-                    if (!PeerManager.getInstance().isStarted())
+                    if (!PeerManager.INSTANCE.isStarted())
                         System.out.println("Minimum" + Configuration.MINIMUM_PEERS + " peers to initiate");
                     else {
                         this.messagesHandler.resourceRequest(EnumResourceId.RESOURCE2);
@@ -75,9 +75,9 @@ public class Application {
                 }
                 case "free r1": {
                     if(isResourceHeld(EnumResourceId.RESOURCE1)) { //Checa se peer realmente tem posse do recurso 1
-                        PeerManager.getInstance().getOurPeer().getResourcesState().put(EnumResourceId.RESOURCE1, EnumResourceStatus.RELEASED);
-                        Map.Entry <Instant,Peer> Head = PeerManager.getInstance().getResourceWanted(EnumResourceId.RESOURCE1).entrySet().iterator().next();//Pega o cabeça da fila que tem o recurso
-                        PeerManager.getInstance().getResourceWanted(EnumResourceId.RESOURCE1).remove(Head.getKey());//Remove ele proprio da cabeça da fila
+                        PeerManager.INSTANCE.getOurPeer().getResourcesState().put(EnumResourceId.RESOURCE1, EnumResourceStatus.RELEASED);
+                        Map.Entry <Instant,Peer> Head = PeerManager.INSTANCE.getResourceWanted(EnumResourceId.RESOURCE1).entrySet().iterator().next();//Pega o cabeça da fila que tem o recurso
+                        PeerManager.INSTANCE.getResourceWanted(EnumResourceId.RESOURCE1).remove(Head.getKey());//Remove ele proprio da cabeça da fila
                         this.messagesHandler.resourceRelease(EnumResourceId.RESOURCE1);//avisar os outros por multicast que liberou
                     }
                     else {
@@ -87,9 +87,9 @@ public class Application {
                 }
                 case "free r2": {
                     if(isResourceHeld(EnumResourceId.RESOURCE2)) { //Checa peer realmente tem posse do recurso 2
-                        PeerManager.getInstance().getOurPeer().getResourcesState().put(EnumResourceId.RESOURCE2, EnumResourceStatus.RELEASED);
-                        Map.Entry <Instant,Peer> Head = PeerManager.getInstance().getResourceWanted(EnumResourceId.RESOURCE2).entrySet().iterator().next();//Pega o cabeça da fila que tem o recurso
-                        PeerManager.getInstance().getResourceWanted(EnumResourceId.RESOURCE2).remove(Head.getKey());//Remove ele proprio da cabeça da fila
+                        PeerManager.INSTANCE.getOurPeer().getResourcesState().put(EnumResourceId.RESOURCE2, EnumResourceStatus.RELEASED);
+                        Map.Entry <Instant,Peer> Head = PeerManager.INSTANCE.getResourceWanted(EnumResourceId.RESOURCE2).entrySet().iterator().next();//Pega o cabeça da fila que tem o recurso
+                        PeerManager.INSTANCE.getResourceWanted(EnumResourceId.RESOURCE2).remove(Head.getKey());//Remove ele proprio da cabeça da fila
                         this.messagesHandler.resourceRelease(EnumResourceId.RESOURCE2);//avisar os outros por multicast que liberou
                     }
                     else {
@@ -114,7 +114,7 @@ public class Application {
     }
 
     private boolean isResourceHeld(EnumResourceId resourceId){
-        if(PeerManager.getInstance().getOurPeer().getResourcesState().get(resourceId) == EnumResourceStatus.HELD) //Se peer tem posse do recurso
+        if(PeerManager.INSTANCE.getOurPeer().getResourcesState().get(resourceId) == EnumResourceStatus.HELD) //Se peer tem posse do recurso
             return true;
         return false;
     }

@@ -11,56 +11,49 @@ import java.util.*;
 /**
  * Singleton de estado da lista de peers conhecidos pela instância
  */
-public class PeerManager {
-    private static PeerManager ourInstance = new PeerManager();
+public enum PeerManager {
+    INSTANCE();
+
     private Peer ourPeer;
     private List<Peer> peerList;
     private Boolean started = false;
     private Map<Instant, Peer> resourceWanted1;
     private Map<Instant, Peer> resourceWanted2;
 
-    private PeerManager() {
+    PeerManager() {
         this.peerList = new LinkedList<>();
-    }
-
-    public static PeerManager getInstance() {
-        return ourInstance;
+        try {
+            KeyPair keyPair = CryptoUtils.generateRSA();
+            this.ourPeer = new Peer(keyPair.getPublic(), keyPair.getPrivate());
+            System.err.println("Our peer ID: " + this.ourPeer.getId());
+            this.resourceWanted1 = new TreeMap<Instant, Peer>();
+            this.resourceWanted2 = new TreeMap<Instant, Peer>();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
     }
 
     public Peer getOurPeer() {
-        if (ourInstance.ourPeer == null) {
-            int generatedPort = new Random().nextInt(50) + 4200;
-            System.err.println("Generated instance port: " + generatedPort);
-            try {
-                KeyPair keyPair = CryptoUtils.generateRSA();
-                ourInstance.ourPeer = new Peer(keyPair.getPublic(), keyPair.getPrivate());
-                this.resourceWanted1 = new TreeMap<Instant, Peer>();
-                this.resourceWanted2 = new TreeMap<Instant, Peer>();
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            }
-
-        }
-        return ourInstance.ourPeer;
+        return this.ourPeer;
     }
 
     public void add(Peer p) {
-        peerList.add(p);
+        this.peerList.add(p);
         System.err.println("Added peer to list: " + p.getId());
-        updateStarted(peerList);
+        updateStarted(this.peerList);
     }
 
     public void remove(Peer p) {
-        peerList.remove(p);
+        this.peerList.remove(p);
         System.err.println("Removing peer from list: " + p.getId());
     }
 
     public void printPeerList() {
-        if (peerList.size() == 0)
+        if (this.peerList.size() == 0)
             System.out.println("\nEmpty peers list\n");
         else {
             System.out.println("\nPeers list: \n");
-            for (Peer peer : peerList) {
+            for (Peer peer : this.peerList) {
                 System.out.println(peer.getId() + "\n");
             }
         }
@@ -75,8 +68,8 @@ public class PeerManager {
             started = true;
     }
 
-    public Map<Instant, Peer> getResourceWanted(EnumResourceId resource){
-        if(resource.equals(EnumResourceId.RESOURCE1))
+    public Map<Instant, Peer> getResourceWanted(EnumResourceId resource) {
+        if (resource.equals(EnumResourceId.RESOURCE1))
             return resourceWanted1;
         return resourceWanted2;
     }
