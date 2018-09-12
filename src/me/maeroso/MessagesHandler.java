@@ -19,6 +19,7 @@ import java.security.PublicKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -196,7 +197,23 @@ class MessagesHandler {
                 e.printStackTrace();
             }
         } else {
+            this.releaseFromQueue(EnumResourceId.RESOURCE1);
+            this.releaseFromQueue(EnumResourceId.RESOURCE2);
             mSendMessage(this.mSocket.get(), new Message(Message.MessageType.LEAVE_REQUEST, PeerManager.INSTANCE.getOurPeer()));
+        }
+    }
+
+    public void releaseFromQueue(EnumResourceId resourceId) {
+        Map<Instant, Peer> resourceQueue = PeerManager.INSTANCE.getResourceWanted(resourceId);
+        Map.Entry<Instant, Peer> Head;
+        if (!resourceQueue.isEmpty()) { //Verifica se n ta vazia
+            Iterator<Map.Entry<Instant, Peer>> iterator = resourceQueue.entrySet().iterator();
+            Head = iterator.next();//Pega novo cabeça da fila
+            if (Head.getValue().equals(PeerManager.INSTANCE.getOurPeer())) { //Se o cabeça da fila for a gente, muda pra HELD
+                this.resourceRelease(resourceId);
+            } else {
+                //TODO se estiver no corpo da fila, ainda com WANTED
+            }
         }
     }
 
@@ -295,12 +312,11 @@ class MessagesHandler {
             Optional<Peer> first = PeerManager.INSTANCE.getPeerList().stream().filter(peer -> peer.getId().equals(supposedPeer.getId())).findFirst();
             PublicKey truePubKey = first.get().getPublicKey();
             try {
-                byte[] bytes = CryptoUtils.checkSignature(truePubKey, messageReceived.signature);
-                String id = new String(bytes);
-                if(!id.equals(messageReceived.sourcePeer.getId()))
-                    return;
+                CryptoUtils.checkSignature(truePubKey, messageReceived.signature);
+                System.err.println(String.format("VALID SIGNATURE FROM %s ", messageReceived.sourcePeer.getId()));
             } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException e) {
-                e.printStackTrace();
+                System.err.println(String.format("INVALID SIGNATURE FROM %s ", messageReceived.sourcePeer.getId()));
+                return;
             }
 
             EnumResourceId requestedResource = messageReceived.getResource();// Guarda qual dos dois recursos é o request
