@@ -9,22 +9,22 @@ import java.security.*;
 /**
  * Classe estática de funções relacionadas a criptografia.
  */
-class CryptoUtils {
-    static byte[] encrypt(PublicKey publicKey, byte[] toEncrypt) throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, BadPaddingException, IllegalBlockSizeException {
+public class CryptoUtils {
+    public static byte[] sign(PrivateKey privateKey, byte[] toEncrypt) throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, BadPaddingException, IllegalBlockSizeException {
         Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+        cipher.init(Cipher.ENCRYPT_MODE, privateKey);
 
         return cipher.doFinal(toEncrypt);
     }
 
-    static byte[] decrypt(PrivateKey privateKey, byte[] toDecrypt) throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, BadPaddingException, IllegalBlockSizeException {
+    public static byte[] checkSignature(PublicKey publicKey, byte[] toDecrypt) throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, BadPaddingException, IllegalBlockSizeException {
         Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+        cipher.init(Cipher.DECRYPT_MODE, publicKey);
 
         return cipher.doFinal(toDecrypt);
     }
 
-    static KeyPair generateRSA() throws NoSuchAlgorithmException {
+    public static KeyPair generateRSA() throws NoSuchAlgorithmException {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
         kpg.initialize(1024);
         return kpg.generateKeyPair();

@@ -5,17 +5,24 @@ import me.maeroso.enums.EnumResourceStatus;
 import me.maeroso.protocol.Message;
 import me.maeroso.protocol.Peer;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -197,7 +204,7 @@ class MessagesHandler {
      * método que constrói e envia mensagem de requisição de recurso aos pares.
      */
     private void mResourceRequest(EnumResourceId resourceId, Instant timestamp) {
-        mSendMessage(this.mSocket.get(), new Message(Message.MessageType.RESOURCE_REQUEST, PeerManager.INSTANCE.getOurPeer(), resourceId, timestamp));
+        mSendMessage(this.mSocket.get(), new Message(Message.MessageType.RESOURCE_REQUEST, PeerManager.INSTANCE.getOurPeer(), resourceId, timestamp, PeerManager.INSTANCE.getOurPeer().getSignature()));
     }
 
     /**
@@ -229,11 +236,12 @@ class MessagesHandler {
                     ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream); // cria input stream de objeto
                     Message messageReceived = (Message) objectInputStream.readObject(); // converte array de bytes do pacote em objeto
 
+                    System.err.println("Message received: " + messageReceived);
+
                     // se a mensagem capturada é do própria instancia, pule
                     if (messageReceived.sourcePeer.equals(PeerManager.INSTANCE.getOurPeer()))
                         continue;
 
-                    System.err.println("Message received: " + messageReceived);
                     switch (messageReceived.messageType) { // verifica tipo da mensagem
                         case GREETING_REQUEST: { // mensagem de requisição de cumprimento
                             handleGreetingRequest(messageReceived);
@@ -283,6 +291,18 @@ class MessagesHandler {
         }
 
         private void handleResourceRequest(Message messageReceived) {
+            Peer supposedPeer = messageReceived.sourcePeer;
+            Optional<Peer> first = PeerManager.INSTANCE.getPeerList().stream().filter(peer -> peer.getId().equals(supposedPeer.getId())).findFirst();
+            PublicKey truePubKey = first.get().getPublicKey();
+            try {
+                byte[] bytes = CryptoUtils.checkSignature(truePubKey, messageReceived.signature);
+                String id = new String(bytes);
+                if(!id.equals(messageReceived.sourcePeer.getId()))
+                    return;
+            } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException e) {
+                e.printStackTrace();
+            }
+
             EnumResourceId requestedResource = messageReceived.getResource();// Guarda qual dos dois recursos é o request
             EnumResourceStatus requestedResourceStatus = PeerManager.INSTANCE.getOurPeer().getResourcesState().get(requestedResource); //verifica em que situação o estado está para este peer
             mSendMessage(mSocket.get(), new Message(Message.MessageType.RESOURCE_RESPONSE, PeerManager.INSTANCE.getOurPeer(), messageReceived.sourcePeer, requestedResource, requestedResourceStatus, Instant.now())); // envia mensagem de resposta a requisição

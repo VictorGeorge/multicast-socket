@@ -14,6 +14,8 @@ public class Message implements Serializable {
     public MessageType messageType;
     public EnumResourceId resource;
     public EnumResourceStatus status;
+    public byte[] signature;
+
     Instant timestamp;
 
     public Message(MessageType messageType, Peer sourcePeer) {
@@ -47,6 +49,14 @@ public class Message implements Serializable {
         this.resource = resource;
         this.status = status;
         this.timestamp = timestamp;
+    }
+
+    public Message(MessageType messageType, Peer sourcePeer, EnumResourceId resource, Instant timestamp, byte[] signature) { //Mensagem de requisição de recurso ou mudança na fila
+        this.messageType = messageType;
+        this.sourcePeer = sourcePeer;
+        this.resource = resource;
+        this.timestamp = timestamp;
+        this.signature = signature;
     }
 
     @Override
